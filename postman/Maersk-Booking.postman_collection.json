@@ -1,0 +1,81 @@
+{
+  "info": {
+    "name": "Maersk Booking API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Check Availability",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-API-KEY",
+            "value": "{{api_key}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/bookings/availability",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "bookings",
+            "availability"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"containerType\": \"DRY\", \"containerSize\": 20, \"origin\": \"Southampton\", \"destination\": \"Singapore\", \"quantity\": 5}"
+        }
+      }
+    },
+    {
+      "name": "Create Booking",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-API-KEY",
+            "value": "{{api_key}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/bookings",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "bookings"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"containerType\": \"DRY\", \"containerSize\": 20, \"origin\": \"Southampton\", \"destination\": \"Singapore\", \"quantity\": 5, \"timestamp\": \"2020-10-12T13:53:09Z\"}"
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "api_key",
+      "value": "dev-key"
+    }
+  ]
+}

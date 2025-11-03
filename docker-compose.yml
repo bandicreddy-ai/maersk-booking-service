@@ -1,0 +1,40 @@
+services:
+  mongo:
+    image: mongo:6
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  wiremock:
+    image: wiremock/wiremock:3.8.0
+    ports:
+      - "8081:8080"
+    command: ["--verbose"]
+    volumes:
+      - ./wiremock/__files:/home/wiremock/__files
+      - ./wiremock/mappings:/home/wiremock/mappings
+
+  backend:
+    build: ./backend
+    environment:
+      - MONGODB_URI=mongodb://mongo:27017/maersk_bookings
+      - EXTERNAL_BASE_URL=http://wiremock:8080
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mongo
+      - wiremock
+
+  frontend:
+    build: ./frontend
+    environment:
+      - VITE_API_BASE=http://localhost:8080
+      - VITE_API_KEY=dev-key
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+volumes:
+  mongo_data:

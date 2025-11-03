@@ -1,0 +1,24 @@
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  IMAGE_NAME: 'booking-backend'
+
+steps:
+- task: Maven@4
+  inputs:
+    mavenPomFile: 'backend/pom.xml'
+    goals: 'package -DskipTests'
+
+- task: Docker@2
+  inputs:
+    command: buildAndPush
+    repository: $(IMAGE_NAME)
+    dockerfile: backend/Dockerfile
+    containerRegistry: '$(dockerServiceConnection)'
+    tags: |
+      $(Build.BuildId)
+      latest

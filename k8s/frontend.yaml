@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: booking-frontend
+  namespace: maersk
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: booking-frontend
+  template:
+    metadata:
+      labels:
+        app: booking-frontend
+    spec:
+      containers:
+        - name: web
+          image: your-registry/booking-frontend:1.0.0
+          ports:
+            - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: booking-frontend
+  namespace: maersk
+spec:
+  selector:
+    app: booking-frontend
+  ports:
+    - port: 80
+      targetPort: 80

@@ -1,0 +1,15 @@
+{
+  "request": {
+    "method": "POST",
+    "urlPath": "/api/bookings/checkAvailable"
+  },
+  "response": {
+    "status": 200,
+    "jsonBody": {
+      "availableSpace": 6
+    },
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  }
+}

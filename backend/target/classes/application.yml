@@ -1,0 +1,28 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: booking-service
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/booking
+#  data:
+#    mongodb:
+#      database: maersk_bookings
+#      uri: ${MONGODB_URI:mongodb://mongo:27017/maersk_bookings}
+
+app:
+  external:
+    #base-url: ${EXTERNAL_BASE_URL:http://wiremock:8080}
+    availability-path: /api/bookings/checkAvailable
+    # Using Stub WireMock
+    base-url: http://localhost:9090
+  booking:
+    sequence-start: 957000000
+
+security:
+  api-key:
+    enabled: false
+    header: X-API-KEY
+    value: dev-key
