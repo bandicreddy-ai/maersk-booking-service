@@ -1,6 +1,5 @@
-# Maersk Booking User Story: Cargo Container Booking-service – Full Stack (Java 17above + React + Spring WebFlux + MongoDB) 
+# Maersk Booking User Story Scenario: Cargo Container Booking-service – Full Stack (Java 17above + React + Spring WebFlux + MongoDB) 
 
-## Developed By: Bandi Chandrasekhar Reddy | Mob: +91 9880318877 | Email: chandrabandir@gmail.com
 Implemented the **Coding Task** user story: two endpoints to (1) check availability (proxy to external) and (2) create a booking and store in MongoDB. Built with Java 17, Spring Boot 3 (WebFlux), MongoDB (reactive), React, Docker, K8s, and CI starters.
 
 ## Endpoints (secured via API Key)
