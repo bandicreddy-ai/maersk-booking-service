@@ -1,0 +1,20 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+Maersk Booking API,com.maersk.booking.config,AvailabilityClientProperties,3,40,0,0,1,12,1,8,1,8
+Maersk Booking API,com.maersk.booking.config,WebClientConfig,80,0,0,0,16,0,5,0,5,0
+Maersk Booking API,com.maersk.booking.config,ApiKeyProperties,33,0,0,0,10,0,7,0,7,0
+Maersk Booking API,com.maersk.booking.mongo,BookingRefGenerator,58,4,0,0,13,1,3,1,3,1
+Maersk Booking API,com.maersk.booking.mongo,BookingRefGenerator.Sequence,26,0,0,0,6,0,6,0,6,0
+Maersk Booking API,com.maersk.booking.mongo,BookingEntity,31,45,0,0,8,16,8,8,8,8
+Maersk Booking API,com.maersk.booking.security,ApiKeyWebFilter,50,0,6,0,9,0,6,0,3,0
+Maersk Booking API,com.maersk.booking,BookingApiApplication,21,0,0,0,6,0,3,0,3,0
+Maersk Booking API,com.maersk.booking.validation,OneOfIntValidator,6,40,3,3,1,7,3,4,0,4
+Maersk Booking API,com.maersk.booking.logging,LoggingWebFilter,146,0,8,0,17,0,10,0,6,0
+Maersk Booking API,com.maersk.booking.web,BookingController,0,30,0,0,0,8,0,4,0,4
+Maersk Booking API,com.maersk.booking.web,GlobalExceptionHandler,36,0,0,0,12,0,4,0,4,0
+Maersk Booking API,com.maersk.booking.model,Dtos.AvailabilityResponse,0,6,0,0,0,1,0,1,0,1
+Maersk Booking API,com.maersk.booking.model,Dtos.BookingResponse,0,6,0,0,0,1,0,1,0,1
+Maersk Booking API,com.maersk.booking.model,Dtos.BookingRequest,0,21,0,0,0,1,0,1,0,1
+Maersk Booking API,com.maersk.booking.model,Dtos,3,0,0,0,1,0,1,0,1,0
+Maersk Booking API,com.maersk.booking.model,Dtos.AvailabilityRequest,0,18,0,0,0,1,0,1,0,1
+Maersk Booking API,com.maersk.booking.service,BookingService.AvailablePayload,0,6,0,0,0,1,0,1,0,1
+Maersk Booking API,com.maersk.booking.service,BookingService,0,207,0,2,0,39,0,10,0,9

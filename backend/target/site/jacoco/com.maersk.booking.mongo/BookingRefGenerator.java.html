@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BookingRefGenerator.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Maersk Booking API</a> &gt; <a href="index.source.html" class="el_package">com.maersk.booking.mongo</a> &gt; <span class="el_source">BookingRefGenerator.java</span></div><h1>BookingRefGenerator.java</h1><pre class="source lang-java linenums">package com.maersk.booking.mongo;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.stereotype.Component;
+import reactor.core.publisher.Mono;
+
+@Component
+public class BookingRefGenerator {
+<span class="fc" id="L14">    private static final Logger log = LoggerFactory.getLogger(BookingRefGenerator.class);</span>
+
+    private static final String SEQ_NAME = &quot;bookingRef&quot;;
+    private static final long BASE = 957_000_000L; // +1 =&gt; 957000001
+
+    private final ReactiveMongoTemplate template;
+
+<span class="nc" id="L21">    public BookingRefGenerator(ReactiveMongoTemplate template) {</span>
+<span class="nc" id="L22">        this.template = template;</span>
+<span class="nc" id="L23">    }</span>
+
+    public Mono&lt;String&gt; next() {
+<span class="nc" id="L26">        log.debug(&quot;Generating next bookingRef...&quot;);</span>
+<span class="nc" id="L27">        Query q = new Query(Criteria.where(&quot;_id&quot;).is(SEQ_NAME));</span>
+<span class="nc" id="L28">        Update u = new Update().inc(&quot;value&quot;, 1);</span>
+<span class="nc" id="L29">        return template.findAndModify(q, u,</span>
+<span class="nc" id="L30">                org.springframework.data.mongodb.core.FindAndModifyOptions.options().returnNew(true).upsert(true),</span>
+                Sequence.class, &quot;counters&quot;)
+<span class="nc" id="L32">                .defaultIfEmpty(new Sequence(SEQ_NAME, 1))</span>
+<span class="nc" id="L33">                .map(seq -&gt; {</span>
+<span class="nc" id="L34">                    String ref = Long.toString(BASE + seq.value());</span>
+<span class="nc" id="L35">                    log.info(&quot;Generated bookingRef={}&quot;, ref);</span>
+<span class="nc" id="L36">                    return ref;</span>
+                });
+    }
+
+    static class Sequence {
+        private String id;
+        private long value;
+<span class="nc" id="L43">        public Sequence() {}</span>
+<span class="nc" id="L44">        public Sequence(String id, long value) { this.id = id; this.value = value; }</span>
+<span class="nc" id="L45">        public String getId() { return id; }</span>
+<span class="nc" id="L46">        public void setId(String id) { this.id = id; }</span>
+<span class="nc" id="L47">        public long value() { return value; }</span>
+<span class="nc" id="L48">        public void setValue(long value) { this.value = value; }</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

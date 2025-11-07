@@ -2,27 +2,30 @@ server:
   port: 8080
 
 spring:
-  application:
-    name: booking-service
   data:
     mongodb:
-      uri: mongodb://localhost:27017/booking
-#  data:
-#    mongodb:
-#      database: maersk_bookings
-#      uri: ${MONGODB_URI:mongodb://mongo:27017/maersk_bookings}
+      uri: mongodb://localhost:27017/maersk_booking
+      database: maersk_booking
 
-app:
-  external:
-    #base-url: ${EXTERNAL_BASE_URL:http://wiremock:8080}
-    availability-path: /api/bookings/checkAvailable
-    # Using Stub WireMock
-    base-url: http://localhost:9090
-  booking:
-    sequence-start: 957000000
+logging:
+  level:
+    root: INFO
+    com.maersk.booking: DEBUG
+  file:
+    name: logs/app.log
 
 security:
   api-key:
-    enabled: false
+    enabled: true     # << enabled by request
     header: X-API-KEY
-    value: dev-key
+    value: dev-secret
+
+availability:
+  base-url: http://localhost:9090
+  path: /api/bookings/checkAvailable
+  retries: 0
+  backoff-millis: 0
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html

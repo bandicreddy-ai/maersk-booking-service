@@ -1,40 +1,41 @@
+version: "3.9"
 services:
   mongo:
-    image: mongo:6
-    ports:
-      - "27017:27017"
+    image: mongo:7
+    container_name: booking-mongo
+    ports: ["27017:27017"]
     volumes:
       - mongo_data:/data/db
 
   wiremock:
-    image: wiremock/wiremock:3.8.0
-    ports:
-      - "8081:8080"
-    command: ["--verbose"]
-    volumes:
-      - ./wiremock/__files:/home/wiremock/__files
-      - ./wiremock/mappings:/home/wiremock/mappings
+    image: wiremock/wiremock:3.9.1
+    container_name: booking-wiremock
+    ports: ["9090:8080"]
+    command: ["--port","8080"]
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/__admin"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
   backend:
     build: ./backend
+    depends_on: [mongo, wiremock]
     environment:
-      - MONGODB_URI=mongodb://mongo:27017/maersk_bookings
-      - EXTERNAL_BASE_URL=http://wiremock:8080
-    ports:
-      - "8080:8080"
-    depends_on:
-      - mongo
-      - wiremock
+      - SPRING_DATA_MONGODB_URI=mongodb://mongo:27017/maersk_booking
+      - availability.base-url=http://wiremock:8080
+      - availability.path=/api/bookings/checkAvailable
+      - security.api-key.enabled=true
+      - security.api-key.header=X-API-KEY
+      - security.api-key.value=dev-secret
+    ports: ["8080:8080"]
 
   frontend:
     build: ./frontend
     environment:
-      - VITE_API_BASE=http://localhost:8080
-      - VITE_API_KEY=dev-key
-    ports:
-      - "3000:80"
-    depends_on:
-      - backend
+      - VITE_BACKEND_URL=http://localhost:8080
+    ports: ["3000:3000"]
+    depends_on: [backend]
 
 volumes:
   mongo_data:

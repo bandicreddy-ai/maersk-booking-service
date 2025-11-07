@@ -1,17 +1,12 @@
 package com.maersk.booking.service;
 
-import com.maersk.booking.api.dto.AvailabilityRequest;
-import com.maersk.booking.api.dto.AvailabilityResponse;
-import com.maersk.booking.api.dto.BookingRequest;
-import com.maersk.booking.api.dto.BookingResponse;
-import com.maersk.booking.model.Booking;
-import com.maersk.booking.model.Counter;
-import com.maersk.booking.repo.BookingRepository;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.mongodb.core.ReactiveMongoOperations;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.data.mongodb.core.query.Update;
+import com.maersk.booking.config.AvailabilityClientProperties;
+import com.maersk.booking.model.Dtos.*;
+import com.maersk.booking.mongo.BookingEntity;
+import com.maersk.booking.mongo.BookingRefGenerator;
+import com.maersk.booking.mongo.BookingRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -23,72 +18,65 @@ import java.util.Map;
 @Service
 public class BookingService {
 
-    private final BookingRepository bookingRepository;
-    private final ReactiveMongoOperations mongoOps;
-    private final WebClient webClient;
-    private final String externalPath;
-    private final long sequenceStart;
+    private static final Logger log = LoggerFactory.getLogger(BookingService.class);
 
-    public BookingService(
-            BookingRepository bookingRepository,
-            ReactiveMongoOperations mongoOps,
-            WebClient.Builder webClientBuilder,
-            @Value("${app.external.base-url}") String baseUrl,
-            @Value("${app.external.availability-path}") String externalPath,
-            @Value("${app.booking.sequence-start}") long sequenceStart
-    ) {
+    private final WebClient availabilityClient;
+    private final AvailabilityClientProperties props;
+    private final BookingRepository bookingRepository;
+    private final BookingRefGenerator refGenerator;
+
+    public BookingService(WebClient availabilityWebClient,
+                          AvailabilityClientProperties props,
+                          BookingRepository bookingRepository,
+                          BookingRefGenerator refGenerator) {
+        this.availabilityClient = availabilityWebClient;
+        this.props = props;
         this.bookingRepository = bookingRepository;
-        this.mongoOps = mongoOps;
-        this.webClient = webClientBuilder.baseUrl(baseUrl).build();
-        this.externalPath = externalPath;
-        this.sequenceStart = sequenceStart;
+        this.refGenerator = refGenerator;
     }
 
-    public Mono<AvailabilityResponse> checkAvailability(AvailabilityRequest req) {
-        return webClient.post()
-                .uri(externalPath)
+    public Mono<AvailabilityResponse> checkAvailability(AvailabilityRequest request) {
+        log.info("Calling external availability: path={} payload=[size={},type={},from={},to={},qty={}]",
+                props.getPath(), request.containerSize(), request.containerType(), request.origin(), request.destination(), request.quantity());
+        return availabilityClient.post()
+                .uri(props.getPath())
                 .bodyValue(Map.of(
-                        "containerType", req.getContainerType().name(),
-                        "containerSize", req.getContainerSize(),
-                        "origin", req.getOrigin(),
-                        "destination", req.getDestination(),
-                        "quantity", req.getQuantity()
+                        "containerSize", request.containerSize(),
+                        "containerType", request.containerType(),
+                        "origin", request.origin(),
+                        "destination", request.destination(),
+                        "quantity", request.quantity()
                 ))
                 .retrieve()
-                .bodyToMono(Map.class)
-                .timeout(Duration.ofSeconds(3))
-                .retryWhen(Retry.backoff(2, Duration.ofMillis(200)))
-                .map(map -> {
-                    Object v = map.get("availableSpace");
-                    int available = (v instanceof Number) ? ((Number) v).intValue() : 0;
-                    return new AvailabilityResponse(available > 0);
+                .bodyToMono(AvailablePayload.class)
+                .retryWhen(Retry.backoff(props.getRetries(), Duration.ofMillis(props.getBackoffMillis())))
+                .map(payload -> {
+                    boolean available = payload.availableSpace() > 0;
+                    log.info("External response availableSpace={} -> available={}", payload.availableSpace(), available);
+                    return new AvailabilityResponse(available);
+                });
+    }
+
+    public Mono<BookingResponse> createBooking(BookingRequest request) {
+        log.info("Creating booking for [size={},type={},from={},to={},qty={},ts={}]",
+                request.containerSize(), request.containerType(), request.origin(), request.destination(), request.quantity(), request.timestamp());
+        return refGenerator.next()
+                .flatMap(ref -> {
+                    BookingEntity entity = new BookingEntity(
+                            ref,
+                            request.containerSize(),
+                            request.containerType(),
+                            request.origin(),
+                            request.destination(),
+                            request.quantity(),
+                            request.timestamp()
+                    );
+                    return bookingRepository.save(entity)
+                            .doOnSuccess(saved -> log.info("Saved booking bookingRef={}", saved.getBookingRef()))
+                            .map(saved -> new BookingResponse(saved.getBookingRef()));
                 })
-                .onErrorReturn(new AvailabilityResponse(false));
+                .doOnError(ex -> log.error("Failed to create booking: {}", ex.toString()));
     }
 
-    public Mono<BookingResponse> createBooking(BookingRequest req) {
-        return nextSequence("bookingRef").map(seq -> {
-            String bookingRef = String.valueOf(seq);
-            Booking b = new Booking();
-            b.setBookingRef(bookingRef);
-            b.setContainerSize(req.getContainerSize());
-            b.setContainerType(req.getContainerType());
-            b.setOrigin(req.getOrigin());
-            b.setDestination(req.getDestination());
-            b.setQuantity(req.getQuantity());
-            b.setTimestamp(req.getTimestamp());
-            return b;
-        }).flatMap(bookingRepository::save)
-          .map(saved -> new BookingResponse(saved.getBookingRef()))
-          .onErrorMap(ex -> new RuntimeException("PERSISTENCE_ERROR", ex));
-    }
-
-    private Mono<Long> nextSequence(String name) {
-        Query query = Query.query(Criteria.where("_id").is(name));
-        Update update = new Update().inc("seq", 1);
-        return mongoOps.findAndModify(query, update, Counter.class)
-                .switchIfEmpty(mongoOps.save(new Counter(name, sequenceStart)).then(mongoOps.findAndModify(query, update, Counter.class)))
-                .map(Counter::getSeq)
-                .map(seq -> (seq <= sequenceStart) ? sequenceStart + 1 : seq);
-    }
+    private record AvailablePayload(int availableSpace) {}
 }

@@ -2,31 +2,31 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: booking-frontend
-  namespace: maersk
+  namespace: maersk-booking
 spec:
   replicas: 1
   selector:
-    matchLabels:
-      app: booking-frontend
+    matchLabels: { app: booking-frontend }
   template:
     metadata:
-      labels:
-        app: booking-frontend
+      labels: { app: booking-frontend }
     spec:
       containers:
-        - name: web
-          image: your-registry/booking-frontend:1.0.0
-          ports:
-            - containerPort: 80
+        - name: frontend
+          image: ghcr.io/your/repo/booking-frontend:latest
+          env:
+            - name: VITE_BACKEND_URL
+              value: "http://booking-backend.maersk-booking.svc.cluster.local:8080"
+          ports: [{ containerPort: 3000 }]
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: booking-frontend
-  namespace: maersk
+  namespace: maersk-booking
 spec:
-  selector:
-    app: booking-frontend
+  type: ClusterIP
+  selector: { app: booking-frontend }
   ports:
-    - port: 80
-      targetPort: 80
+    - port: 3000
+      targetPort: 3000

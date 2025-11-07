@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.maersk.booking.BookingControllerTest
+-------------------------------------------------------------------------------
+Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 4.100 s -- in com.maersk.booking.BookingControllerTest

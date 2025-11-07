@@ -5,20 +5,24 @@ pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  IMAGE_NAME: 'booking-backend'
+  buildConfiguration: 'Release'
 
-steps:
-- task: Maven@4
-  inputs:
-    mavenPomFile: 'backend/pom.xml'
-    goals: 'package -DskipTests'
-
-- task: Docker@2
-  inputs:
-    command: buildAndPush
-    repository: $(IMAGE_NAME)
-    dockerfile: backend/Dockerfile
-    containerRegistry: '$(dockerServiceConnection)'
-    tags: |
-      $(Build.BuildId)
-      latest
+stages:
+- stage: Build
+  jobs:
+  - job: BuildBackend
+    steps:
+    - task: Maven@4
+      inputs:
+        mavenPomFile: 'backend/pom.xml'
+        publishJUnitResults: true
+        testResultsFiles: '**/surefire-reports/TEST-*.xml'
+        goals: 'package -DskipTests'
+    - task: Docker@2
+      inputs:
+        containerRegistry: '$(dockerServiceConnection)'
+        repository: 'booking-backend'
+        command: 'buildAndPush'
+        Dockerfile: 'backend/Dockerfile'
+        tags: |
+          $(Build.BuildId)

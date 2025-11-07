@@ -1,86 +1,57 @@
-# Maersk Booking User Story Scenario: Cargo Container Booking-service – Full Stack (Java 17above + React + Spring WebFlux + MongoDB) 
+# Maersk Booking – Full Stack (React + Spring WebFlux + MongoDB) with Logging & Security
 
-Implemented the **Coding Task** user story: two endpoints to (1) check availability (proxy to external) and (2) create a booking and store in MongoDB. Built with Java 17, Spring Boot 3 (WebFlux), MongoDB (reactive), React, Docker, K8s, and CI starters.
+## Stack
+- Backend: Java 17, Spring Boot 3 (WebFlux, Reactive Mongo), OpenAPI, validation
+- Frontend: React + Vite
+- Security: API key header (`X-API-KEY`), enabled by default
+- External dependency: WireMock simulating `availableSpace`
+- Docker & K8s manifests
+- CI: GitHub Actions (AWS ECR), Azure Pipelines
+- Logging: Logback (ISO timestamps), MDC correlation ID, rolling files
 
-## Endpoints (secured via API Key)
-- `POST /api/bookings/availability` ➜ `{ "available": true|false }`
-- `POST /api/bookings` ➜ `{ "bookingRef": "95700000x" }`
-
-**Security:** API Key required on `/api/**` when enabled. Send header: `X-API-KEY: dev-key` (configurable in `application.yml` under `security.api-key.*`).  
-**Swagger UI:** `http://localhost:8080/swagger-ui/index.html`
-
-## How to run (Docker Compose)
+## Quick Start (local)
 ```bash
 docker compose up --build
 ```
-Services:
-- MongoDB on `localhost:27017`
-- WireMock stubbing external endpoint at `POST /api/bookings/checkAvailable` returning `{"availableSpace":6}`
-- Backend on `http://localhost:8080`
-- Frontend on `http://localhost:3000`
+- Frontend: http://localhost:3000
+- Backend:  http://localhost:8080 (Swagger at /swagger-ui.html)
+- Mongo:    mongodb://localhost:27017/maersk_booking
+- WireMock: http://localhost:9090
+- API key:  header `X-API-KEY: dev-secret`
 
-The backend calls external `EXTERNAL_BASE_URL + /api/bookings/checkAvailable` with the request payload and interprets `availableSpace` per the spec in the **Coding Task**. If `availableSpace==0` ➜ `available=false`, otherwise `true`.
+## WireMock stubs
+Create "available" mapping:
+```bash
+curl -X POST http://localhost:9090/__admin/mappings   -H "Content-Type: application/json"   -d '{"request":{"method":"POST","url":"/api/bookings/checkAvailable"},"response":{"status":200,"headers":{"Content-Type":"application/json"},"body":"{\"availableSpace\": 6}"}}'
+```
+Change to unavailable:
+```bash
+curl -X POST http://localhost:9090/__admin/mappings   -H "Content-Type: application/json"   -d '{"request":{"method":"POST","url":"/api/bookings/checkAvailable"},"response":{"status":200,"headers":{"Content-Type":"application/json"},"body":"{\"availableSpace\": 0}"}}'
+```
 
-## Local dev (Backend)
+## Endpoints
+- `POST /api/bookings/availability` → `{ "available": true|false }`
+- `POST /api/bookings` → `{ "bookingRef": "957000001" }`
+
+## Postman
+Import `postman_collection.json` and send.
+
+## Build backend only
 ```bash
 cd backend
-mvn spring-boot:run
+mvn clean package
+java -jar target/booking-api-1.1.0.jar
 ```
-**Config:** `src/main/resources/application.yml`  
-- `MONGODB_URI` (default: `mongodb://mongo:27017/maersk_bookings`)  
-- `EXTERNAL_BASE_URL` (default: `http://wiremock:8080`)  
 
-## Run tests + coverage
+## K8s
 ```bash
-cd backend
-mvn verify   # generates Jacoco report at target/site/jacoco/index.html
-```
-
-## React UI
-```bash
-cd frontend
-npm install
-npm run dev # UI at http://localhost:3000
-```
-Environment:
-- `VITE_API_BASE` (default `http://localhost:8080`)
-- `VITE_API_KEY` (default `dev-key`)
-
-## Security
-- WebFlux `SecurityWebFilterChain` keeps paths open; a high-priority `WebFilter` enforces API key.
-- Configure in `application.yml`:
-```yaml
-security:
-  api-key:
-    enabled: true
-    header: X-API-KEY
-    value: dev-key
-```
-Set `enabled: false` for local dev if you want to bypass.
-
-## Kubernetes (starter)
-Manifests under `k8s/`. Update images (`your-registry/...`) and apply:
-```bash
+kubectl apply -f k8s/namespace.yaml
+kubectl apply -f k8s/mongo.yaml
+kubectl apply -f k8s/wiremock.yaml
 kubectl apply -f k8s/backend.yaml
 kubectl apply -f k8s/frontend.yaml
 ```
 
-## CI/CD Starters
-- **GitHub Actions (AWS ECR push)**: `.github/workflows/aws-ci.yml`
-- **Azure Pipelines**: `azure-pipelines.yml` for Maven build and Docker image publish (adjust service connections).
-
-## Postman
-Import `postman/Maersk-Booking.postman_collection.json`. Variables:
-- `baseUrl` (default `http://localhost:8080`)
-- `api_key` (default `dev-key`)
-
-## Test URLs
-- Swagger: `http://localhost:8080/swagger-ui/index.html`
-- Availability (curl):
-```bash
-curl -H "X-API-KEY: dev-key" -H "Content-Type: application/json"   -d '{"containerType":"DRY","containerSize":20,"origin":"Southampton","destination":"Singapore","quantity":5}'   http://localhost:8080/api/bookings/availability
-```
-- Booking:
-```bash
-curl -H "X-API-KEY: dev-key" -H "Content-Type: application/json"   -d '{"containerType":"DRY","containerSize":20,"origin":"Southampton","destination":"Singapore","quantity":5,"timestamp":"2020-10-12T13:53:09Z"}'   http://localhost:8080/api/bookings
-```
+## Notes
+- Security **enabled** by default. Disable with `security.api-key.enabled=false` if needed.
+- Logs are in `backend/logs/app.log` with daily rotation.

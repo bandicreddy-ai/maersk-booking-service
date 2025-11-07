@@ -1,0 +1,8 @@
+{
+  "request": { "method": "POST", "url": "/api/bookings/checkAvailable" },
+  "response": {
+    "status": 200,
+    "headers": { "Content-Type": "application/json" },
+    "body": "{\"availableSpace\": 6}"
+  }
+}

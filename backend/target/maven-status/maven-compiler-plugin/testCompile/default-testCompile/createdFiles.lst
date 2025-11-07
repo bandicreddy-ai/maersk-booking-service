@@ -1,2 +1,2 @@
-com\maersk\booking\api\BookingControllerTest.class
-com\maersk\booking\service\BookingServiceTest.class
+com\maersk\booking\BookingServiceTest.class
+com\maersk\booking\BookingControllerTest.class

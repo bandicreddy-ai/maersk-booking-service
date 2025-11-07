@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Dtos.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Maersk Booking API</a> &gt; <a href="index.source.html" class="el_package">com.maersk.booking.model</a> &gt; <span class="el_source">Dtos.java</span></div><h1>Dtos.java</h1><pre class="source lang-java linenums">package com.maersk.booking.model;
+
+import com.maersk.booking.validation.OneOfInt;
+import jakarta.validation.constraints.*;
+
+<span class="nc" id="L6">public class Dtos {</span>
+
+<span class="fc" id="L8">    public record AvailabilityRequest(</span>
+            @OneOfInt({20, 40}) Integer containerSize,
+            @Pattern(regexp = &quot;DRY|REEFER&quot;) String containerType,
+            @Size(min = 5, max = 20) String origin,
+            @Size(min = 5, max = 20) String destination,
+            @Min(1) @Max(100) Integer quantity
+    ) {}
+
+<span class="fc" id="L16">    public record AvailabilityResponse(boolean available) {}</span>
+
+<span class="fc" id="L18">    public record BookingRequest(</span>
+            @OneOfInt({20, 40}) Integer containerSize,
+            @Pattern(regexp = &quot;DRY|REEFER&quot;) String containerType,
+            @Size(min = 5, max = 20) String origin,
+            @Size(min = 5, max = 20) String destination,
+            @Min(1) @Max(100) Integer quantity,
+            @Pattern(
+                regexp = &quot;^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$&quot;,
+                message = &quot;timestamp must be ISO-8601 UTC like 2020-10-12T13:53:09Z&quot;
+            ) String timestamp
+    ) {}
+
+<span class="fc" id="L30">    public record BookingResponse(String bookingRef) {}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
